@@ -1,6 +1,7 @@
 // src/components/DriveImport.tsx
 import { useState, useRef, useEffect } from "react";
 import { listDriveFiles, importDriveFiles } from "../api/drive";
+import { getConnectionId } from "../utils/getConnectionId";
 
 export default function DriveImport({
   onImported,
@@ -11,10 +12,6 @@ export default function DriveImport({
   const [loading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-
-  const connectionId =
-    localStorage.getItem("nango_connection_id") ||
-    "d78542b4-349e-4ab2-933d-2356391fbabd";
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -38,6 +35,7 @@ export default function DriveImport({
   const loadFiles = async () => {
     setLoading(true);
     try {
+      const connectionId = await getConnectionId(); 
       const data = await listDriveFiles(connectionId);
       setFiles(data);
     } catch (err) {
@@ -47,18 +45,19 @@ export default function DriveImport({
     }
   };
 
-  const handleImport = async (fileId: string, connectionId: string) => {
+  const handleImport = async (fileId: string) => {
     setLoading(true);
     try {
+      const connectionId = await getConnectionId(); 
       const file = files.find(f => f.id === fileId);
-        if (!file) {
+      if (!file) {
         alert("File not found");
         return;
       }
       const doc = await importDriveFiles({file_id: fileId, connection_id: connectionId, file_name: files.find(f => f.id === fileId)?.name});
       console.log(fileId, connectionId, files.find(f => f.id === fileId)?.name);
       
-      onImported(doc.id);
+      onImported(doc.document_id);
       setIsOpen(false); // Close after success
     } catch (err) {
       alert("Import failed");
@@ -126,7 +125,7 @@ export default function DriveImport({
               files.map((f) => (
                 <div
                   key={f.id}
-                  onClick={() => handleImport(f.id, connectionId)}
+                  onClick={() => handleImport(f.id)}
                   style={{
                     padding: "10px 12px",
                     cursor: "pointer",

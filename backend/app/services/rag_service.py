@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 
 from app.models.document import DocumentChunk
+from app.models.chat import Message
 from app.services.embedding_service import embed_text
 from app.services.gemini import generate_response
 
@@ -93,14 +94,35 @@ Answer:
 
 def rag_answer(
     db: Session,
+    session_id: int,
     question: str,
     document_id: int | None
 ) -> str:
+    user_msg = Message(
+        session_id=session_id,
+        role="user",
+        content=question
+    )
+    db.add(user_msg)
+    db.commit()
+
     chunks = retrieve_relevant_chunks(db, question, document_id)
 
     if not chunks:
-        return "I don't know based on the provided documents."
+        assistant_reply = "I don't know based on the provided documents."
+    else:
+        # 5. Build Prompt and Call AI
+        prompt = build_rag_prompt(chunks, question)
+        res = generate_response(prompt)
+        assistant_reply = res if res is not None else "I don't know based on the provided documents."
 
-    prompt = build_rag_prompt(chunks, question)
-    response = generate_response(prompt)
-    return response if response is not None else "I don't know based on the provided documents."
+    # 6. Save Assistant Message to DB
+    assistant_msg = Message(
+        session_id=session_id,
+        role="assistant",
+        content=assistant_reply
+    )
+    db.add(assistant_msg)
+    db.commit()
+
+    return assistant_reply

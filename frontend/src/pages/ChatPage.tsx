@@ -12,6 +12,8 @@ import type { ChatSession, ChatMessage } from "../types/chat";
 import { buildChatText } from "../utils/exportChat";
 import { exportToDrive } from "../api/export";
 import { deleteSession } from "../api/chatSessions";
+import { connectGoogleDrive } from "../utils/nango";
+// import { getConnectionId } from "../utils/getConnectionId";
 
 export default function ChatPage() {
   const [sessions, setSessions] = useState<ChatSession[]>([]);
@@ -32,16 +34,24 @@ export default function ChatPage() {
 
     setIsExporting(true);
     try {
+      let connectionId = localStorage.getItem("nango_connection_id");
+
+      if (!connectionId) {
+        connectionId = await connectGoogleDrive();
+      }
       const chatText = buildChatText(messages);
       // const connectionId = localStorage.getItem("nango_connection_id");
+      console.log("Export clicked")
+      // const connectionId = await getConnectionId();
       await exportToDrive({
         content: chatText,
         format: exportFormat,
         filename: `chat_session_${activeSession}.${exportFormat}`,
-        connection_id: "d78542b4-349e-4ab2-933d-2356391fbabd",
+        connection_id: connectionId,
       });
       alert("Chat exported to Google Drive");
     } catch (error) {
+      console.error("EXPORT ERROR:", error);
       alert("Failed to export chat");
     } finally {
       setIsExporting(false);
@@ -98,7 +108,7 @@ export default function ChatPage() {
         return;
       }
 
-      const res = await askRag(text, activeDocumentId);
+      const res = await askRag(text, activeDocumentId, activeSession);
       const assistantMessage: ChatMessage = {
         id: Date.now() + 1,
         role: "assistant",

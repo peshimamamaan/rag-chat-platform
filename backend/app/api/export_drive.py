@@ -17,7 +17,7 @@ def create_pdf_bytes(text_content: str) -> bytes:
     pdf.set_font("Helvetica", size=12)
     
     # multi_cell handles line breaks automatically
-    pdf.multi_cell(0, 10, text_content)
+    pdf.multi_cell(0, 8, text_content)
     
     # Output to bytes
     return pdf.output()

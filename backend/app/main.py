@@ -3,7 +3,7 @@ from typing import Union
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .core.config import settings
-from app.api import chat_sessions, messages, chat, documents, embeddings, rag_chat, nango, google_drive, export, drive_upload, export_drive
+from app.api import chat_sessions, messages, chat, documents, embeddings, rag_chat, nango, google_drive, export, drive_upload, export_drive, nango_session
 
 # print("Database URL:", settings.DATABASE_URL)
 # print("Gemini API Key:", settings.GEMINI_API_KEY)
@@ -32,6 +32,7 @@ app.include_router(google_drive.router)
 app.include_router(export.router)
 app.include_router(drive_upload.router)
 app.include_router(export_drive.router)
+app.include_router(nango_session.router)
 
 
 @app.get("/")
